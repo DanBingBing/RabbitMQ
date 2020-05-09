@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	xsi:schemaLocation="http://www.springframework.org/schema/rabbit
+           http://www.springframework.org/schema/rabbit/spring-rabbit.xsd
+           http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd">
+           
+	<!-- 创建connectionFactory -->
+	<rabbit:connection-factory id="connectionFactory"
+		host="127.0.0.1" 
+		port="5672" 
+		username="rabbitmq_user"
+		password="rabbitmq_user"
+		virtual-host="/vhosts_test" />
+ 
+	<!-- 创建rabbitmq模板 -->
+	<rabbit:template id="amqpTemplate" connection-factory="connectionFactory" exchange="fanoutExchange"/>
+ 
+	<!-- 创建admin ，创建的bean类型为RabbitAdmin -->
+	<rabbit:admin connection-factory="connectionFactory" />
+ 
+ 	<!-- 创建队列 ，并进行持久化配置 -->
+	<rabbit:queue name="myQueue" auto-declare="true" durable="true" />
+	
+	<!-- 创建Exchange ，并绑定Queue -->
+	<rabbit:fanout-exchange name="fanoutExchange" auto-declare="true">
+		<rabbit:bindings>
+			<rabbit:binding queue="myQueue" />
+		</rabbit:bindings>
+	</rabbit:fanout-exchange>
+ 
+	<!-- 配置隊列监听-->
+    <rabbit:listener-container connection-factory="connectionFactory">
+        <!-- queues 监听队列，多个用逗号分隔  ref 监听器 -->
+        <rabbit:listener method="listen" queue-names="myQueue" ref="foo"/>
+    </rabbit:listener-container>
+    
+    <!-- 消費者-->
+    <bean id="foo" class="com.study.spring_rabbitmq.myConsumer" />
+    
+</beans>
